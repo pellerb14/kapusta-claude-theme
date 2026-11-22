@@ -8,8 +8,6 @@ A theme for the Claude desktop app in the colors of Kapusta. Light mode is the p
 
 ## Install
 
-The repository is private. You need read access to it on GitHub, and your computer needs a git credential for github.com (an SSH key, or `gh auth login` followed by `gh auth setup-git`).
-
 At the prompt of a Claude Code terminal session:
 
 ```
