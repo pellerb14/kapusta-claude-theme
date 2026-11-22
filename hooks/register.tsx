@@ -149,13 +149,6 @@ const ASSISTANT: ThemeMessageRule = {
 
 const SOUND: ThemeSound = {
   cues: {
-    send: { layers: [{ wave: 'saw', notes: ['E2'], glide: 7, gain: 0.35, release: 0.18, filter: { type: 'lowpass', hz: 700 } }] },
-    done: {
-      layers: [
-        { wave: 'saw', notes: ['E2', 'G2', 'A2', 'E3'], step: 0.11, gain: 0.35, release: 0.16, filter: { type: 'lowpass', hz: 900 } },
-        { wave: 'triangle', notes: ['E3', 'G3', 'A3', 'E4'], step: 0.11, gain: 0.15, release: 0.12 },
-      ],
-    },
     ask: { layers: [{ wave: 'square', notes: ['B3', 'E4'], gain: 0.18, release: 0.08, filter: { type: 'bandpass', hz: 1400 } }] },
     error: { layers: [{ wave: 'saw', notes: ['A2'], glide: -5, gain: 0.3, release: 0.35, filter: { type: 'lowpass', hz: 600 } }] },
     click: { layers: [{ wave: 'triangle', notes: ['E2', 'A2', 'D3', 'G3', 'B3'], gain: 0.3, release: 0.2 }] },
@@ -1016,6 +1009,21 @@ const applyLook = async ($: EngineInterface, layout: Layout) => {
   }
 }
 
+// ---------- the band's own recordings ----------
+// Both sounds come from the full mix of Watcha, the last song of the 25.10.25 show:
+// send is a short beat from the end of the breakdown, finish is the "Watcha!" shout at 1:01.
+const SEND_CLIP = 'sounds/send.m4a'
+const DONE_CLIP = 'sounds/done.m4a'
+
+const isSoundOn = async ($: EngineInterface) => {
+  const v = (await $.store.get('sound')) as { isOn?: boolean } | undefined
+  return v?.isOn ?? true
+}
+
+const playClip = ($: EngineInterface, asset: string, gain: number) => {
+  $.audio.play({ asset }, { gain }).catch(error => $.ui.log(`kapusta sound: ${String(error)}`))
+}
+
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     const unpainted = problems.find(line => line.startsWith("Desktop won't paint"))
@@ -1026,9 +1034,42 @@ export const register: Register = on => {
       name: 'kapusta-sidebar',
       description: 'Fit the Kapusta art around the sidebar: on (sidebar open) or off (sidebar closed); no argument flips it',
     })
+    await $.command.register({
+      name: 'kapusta-sound',
+      description: 'Watcha sounds on send and finish: on or off; no argument flips it',
+    })
     await applyLook($, await readLayout($))
 
     return next(e)
+  })
+
+  // a snare hit when the person sends a message (not for slash commands or hidden prompts)
+  on('prompt.submit', async ($, e, next) => {
+    if (e.command === undefined && e.isMeta !== true) {
+      if (await isSoundOn($)) playClip($, SEND_CLIP, 0.9)
+    }
+    return next(e)
+  })
+
+  // the "Watcha!" shout when Claude finishes a real answer on the main loop
+  on('turn.complete', async ($, e, next) => {
+    const result = await next(e)
+    if (e.agentId === undefined && e.reason === 'answer') {
+      if (await isSoundOn($)) playClip($, DONE_CLIP, 0.8)
+    }
+    return result
+  })
+
+  on('command.run', { command: 'kapusta-sound' }, async ($, e) => {
+    const arg = e.args.trim().toLowerCase()
+    const isOn = arg === 'on' ? true : arg === 'off' ? false : !(await isSoundOn($))
+    await $.store.set('sound', { isOn })
+    if (isOn) playClip($, DONE_CLIP, 0.8)
+    return {
+      text: isOn
+        ? 'Kapusta sounds on: a beat of Watcha when you send, and the "Watcha!" shout when Claude finishes.'
+        : 'Kapusta sounds off. /kapusta-sound on brings them back.',
+    }
   })
 
   on('command.run', { command: 'kapusta-sidebar' }, async ($, e) => {

@@ -4,7 +4,7 @@ A theme for the Claude desktop app in the colors of Kapusta. Light mode is the p
 
 - **Background:** the band logo, a cabbage band playing live (bass, drums, vocals, guitar) on a stage with footlights, sweeping spotlights, a crowd, falling cabbage leaves and rising notes. Everyone moves to one 100 BPM beat.
 - **Messages:** your messages are ruffled cabbage-leaf bubbles with a riso-print offset shadow. Claude's replies sit in a leaf-edged box with a small cabbage-on-K stamp.
-- **Sound (optional):** a bass slide when you send, a short riff when Claude finishes. Turn it on with the speaker button in the session's title bar.
+- **Sound:** recorded from Kapusta's own live mix of Watcha. A beat from the song plays when you send a message, and the "Watcha!" shout plays when Claude finishes an answer (on a Mac). Turn them off with `/kapusta-sound off`, and back on with `/kapusta-sound on`. The speaker button in the session's title bar adds a few synthesized cues on top, for questions and errors.
 
 ## Install
 
